@@ -1,6 +1,9 @@
 name: Build & Release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -33,7 +36,9 @@ jobs:
         id: version
         run: |
           INPUT_VER="${{ github.event.inputs.version }}"
-          if [ -n "$INPUT_VER" ]; then
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${GITHUB_REF_NAME}" ]; then
+            VER="${GITHUB_REF_NAME#v}"
+          elif [ -n "$INPUT_VER" ]; then
             VER="$INPUT_VER"
           elif [ -f VERSION ]; then
             VER="$(cat VERSION | tr -d '[:space:]')"
@@ -73,13 +78,30 @@ jobs:
           chmod +x scripts/build_ipk.sh
           sh scripts/build_ipk.sh dist
 
+      - name: Set up QEMU for ARM64 Node.js
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Build ARM64 musl Node.js
+        run: |
+          NODE_VER="${{ steps.build_versions.outputs.node_version }}"
+          mkdir -p dist
+          echo "=== Building Node.js v${NODE_VER} ARM64 musl ==="
+          docker run --rm --platform linux/arm64 \
+            -v "$PWD/dist:/output" \
+            -v "$PWD/scripts/build-node-musl.sh:/build-node-musl.sh:ro" \
+            -e "NODE_VER=${NODE_VER}" \
+            -e "BUILD_MODE=cross" \
+            alpine:3.21 sh /build-node-musl.sh
+
       - name: List outputs
         run: |
           echo "=== Build artifacts ==="
           ls -lh dist/
           echo ""
           echo "=== SHA256 checksums ==="
-          sha256sum dist/*.run dist/*.ipk 2>/dev/null || true
+          sha256sum dist/*.run dist/*.ipk dist/*.tar.xz 2>/dev/null || true
 
       - name: Extract changelog
         id: changelog
@@ -99,7 +121,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-openclaw-${{ steps.version.outputs.version }}
-          path: dist/*
+          path: |
+            dist/*.run
+            dist/*.ipk
+            dist/*.tar.xz
           retention-days: 30
           compression-level: 0
 
@@ -115,12 +140,15 @@ jobs:
           OPENLIST_PATH: ${{ secrets.OPENLIST_PATH }}
 
       - name: Create Release
-        if: github.event.inputs.create_release == 'true'
+        if: github.event_name == 'push' || github.event.inputs.create_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.version }}
-          files: dist/*
+          files: |
+            dist/*.run
+            dist/*.ipk
+            dist/*.tar.xz
           draft: false
           prerelease: false
           body: |
