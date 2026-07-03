@@ -4,6 +4,20 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## [2.0.8] - 2026-07-04
+
+### 修复 ARM64 Node.js 下载资产不一致
+
+- 默认 Node.js 更新为 `22.23.0`，与 GitHub Release 和长期 `node-bins` 中的 ARM64 musl 资产保持一致。
+- 同步更新 `build-node-musl.yml` 手动构建参数，避免后续手动构建继续产出旧版本 Node.js。
+- `node-bins` release 已补齐 `node-v22.23.0-linux-arm64-musl.tar.xz`，用于 ARM64 OpenWrt/iStoreOS 在线安装。
+
+### 测试
+
+- 更新 Node.js 默认版本、Node 版本比较和 ARM64 musl 打包契约测试。
+
+---
+
 ## [2.0.7] - 2026-07-04
 
 ### 适配 OpenClaw v2026.6.11
