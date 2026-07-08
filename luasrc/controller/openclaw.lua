@@ -538,11 +538,16 @@ function action_status()
 		if procd_pid ~= "" then
 			procd_pid_alive = (sys.exec("[ -d /proc/" .. procd_pid .. " ] && echo 1 || echo 0"):gsub("%s+", "") == "1")
 		end
+		local pidfile_pid = sys.exec("cat /var/run/openclaw.pid 2>/dev/null || true"):gsub("%s+", "")
+		local pidfile_stale = false
+		if pidfile_pid ~= "" and pidfile_pid:match("^%d+$") then
+			pidfile_stale = (sys.exec("[ -d /proc/" .. pidfile_pid .. " ] && echo 0 || echo 1"):gsub("%s+", "") == "1")
+		end
 		local crash_loop = sys.exec("logread 2>/dev/null | grep -E 'Instance openclaw::gateway.*crash loop' | tail -1"):gsub("^%s+", ""):gsub("%s+$", "")
 
 		if procd_exit ~= "" and tonumber(procd_exit) and tonumber(procd_exit) ~= 0 and procd_running ~= "true" then
 			result.gateway_failed = true
-		elseif crash_loop ~= "" and procd_running ~= "true" and not procd_pid_alive then
+		elseif crash_loop ~= "" and pidfile_stale and procd_running ~= "true" and not procd_pid_alive then
 			result.gateway_failed = true
 			result.gateway_crash_loop = true
 			if result.gateway_exit_code == "" then result.gateway_exit_code = "crash-loop" end

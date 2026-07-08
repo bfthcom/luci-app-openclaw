@@ -18,6 +18,9 @@ grep -Fq "gateway_failed" "$CONTROLLER" || fail "status API should report gatewa
 grep -Fq "gateway_exit_code" "$CONTROLLER" || fail "status API should expose recent gateway exit code"
 grep -Fq "gateway_crash_loop" "$CONTROLLER" || fail "status API should expose procd crash-loop state"
 grep -Fq "procd_pid_alive" "$CONTROLLER" || fail "status API should ignore stale procd pidfiles"
+grep -Fq "pidfile_stale" "$CONTROLLER" || fail "status API should require current stale pidfile evidence for crash-loop"
+grep -Fq 'enabled=$(uci -q get openclaw.main.enabled' "$INIT_SCRIPT" || fail "status_service should honor disabled service state"
+grep -Fq "网关:     已禁用" "$INIT_SCRIPT" || fail "status_service should report disabled gateway before crash-loop"
 if grep -Fq 'pgrep -f "openclaw.*gateway"' "$CONTROLLER" "$INIT_SCRIPT" || grep -Fq "pgrep -f 'openclaw.*gateway'" "$CONTROLLER" "$INIT_SCRIPT"; then
 	fail "status checks must not use broad pgrep fallback that can match the status shell itself"
 fi
