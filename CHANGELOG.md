@@ -33,7 +33,6 @@
 
 - 通过 shell / Node / Lua 语法检查。
 - 通过契约测试 `tests/test_openclaw_contracts.sh`。
-- 在 OpenWrt `10.10.10.165` 上完成真实微信通道、权限、升级按钮验证。
 
 ---
 
