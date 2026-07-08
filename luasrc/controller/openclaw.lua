@@ -191,6 +191,7 @@ fs.writeFileSync(configPath, JSON.stringify(d, null, 2) + '\n');
 		"REG_RC=$?; " ..
 		"if [ $REG_RC -eq 0 ]; then " ..
 		"chown openclaw:openclaw " .. shellquote(config_file) .. " 2>/dev/null; " ..
+		"[ -x /usr/libexec/openclaw-permissions.sh ] && /usr/libexec/openclaw-permissions.sh fix-state " .. shellquote(oc_data .. "/.openclaw") .. " >/dev/null 2>&1; " ..
 		"echo 'Registered openclaw-weixin npm plugin in OpenClaw config.' >> " .. shellquote(log_file) .. "; " ..
 		"else RC=$REG_RC; echo $RC > " .. shellquote(exit_file) .. "; echo 'Failed to register openclaw-weixin npm plugin in OpenClaw config.' >> " .. shellquote(log_file) .. "; fi; " ..
 		"else RC=127; echo $RC > " .. shellquote(exit_file) .. "; echo 'Node.js not found, cannot register openclaw-weixin plugin.' >> " .. shellquote(log_file) .. "; fi; " ..
