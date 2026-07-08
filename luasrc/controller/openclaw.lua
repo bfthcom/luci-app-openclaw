@@ -579,6 +579,7 @@ function action_status()
 			if result.gateway_exit_code == "" then result.gateway_exit_code = "crash-loop" end
 		elseif procd_running == "true" or procd_pid_alive then
 			result.gateway_starting = true
+			result.pid = procd_pid
 		end
 	end
 
@@ -677,10 +678,14 @@ function action_service_ctl()
 		-- stop 后额外等待确保端口释放
 		sys.exec("sleep 2")
 	elseif action == "restart" then
-		-- 先完整 stop (确保端口释放)，再后台 start
-		sys.exec("/etc/init.d/openclaw stop >/dev/null 2>&1")
-		sys.exec("sleep 2")
-		sys.exec("/etc/init.d/openclaw start >/dev/null 2>&1 &")
+		-- 常规“重启”只重启 Gateway，不重启 Web PTY，避免 stop+start 带来的长时间等待。
+		-- 如果 procd 没有 gateway 实例，再回退到 start。
+		local procd_running = sys.exec("ubus call service list '{\"name\":\"openclaw\"}' 2>/dev/null | jsonfilter -e '$.openclaw.instances.gateway.running' 2>/dev/null"):gsub("%s+", "")
+		if procd_running == "true" then
+			sys.exec("/etc/init.d/openclaw restart_gateway >/dev/null 2>&1 &")
+		else
+			sys.exec("/etc/init.d/openclaw start >/dev/null 2>&1 &")
+		end
 	elseif action == "enable" then
 		sys.exec("/etc/init.d/openclaw enable 2>/dev/null")
 	elseif action == "disable" then
