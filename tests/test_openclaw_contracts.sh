@@ -131,6 +131,10 @@ fi
 grep -q "root/usr/libexec" scripts/build_ipk.sh || fail "ipk script must package shell helpers"
 grep -q "root/usr/libexec" scripts/build_run.sh || fail "run script must package shell helpers"
 grep -q "for dep in luci-compat luci-base curl openssl-util script-utils tar libstdcpp6" scripts/build_run.sh || fail ".run installer must install runtime dependencies"
+grep -q -- "--owner=0 --group=0 --numeric-owner" scripts/build_run.sh || fail ".run payload must normalize file ownership to root"
+grep -q -- "--owner=0 --group=0 --numeric-owner" scripts/build_ipk.sh || fail ".ipk payload must normalize file ownership to root"
+grep -q "chown -R root:root" scripts/build_run.sh || fail ".run installer must repair root-owned system files after extraction"
+grep -q "chown -R root:root" scripts/build_ipk.sh || fail ".ipk postinst must repair root-owned system files after extraction"
 grep -q "先解压到临时目录并确认完整，再替换 NODE_BASE" root/usr/bin/openclaw-env || fail "Node install must not delete existing runtime before extraction succeeds"
 grep -q "OC_SETUP_FRESH_ROOT" root/usr/bin/openclaw-env || fail "setup cleanup must preserve existing runtime roots"
 
