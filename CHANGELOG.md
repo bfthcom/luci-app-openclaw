@@ -10,6 +10,9 @@
 
 - 启动 OpenClaw 时自动自愈微信 npm 插件注册，补齐 `plugins.installs.openclaw-weixin`、`plugins.allow` 和 `channels.openclaw-weixin.enabled`。
 - 微信安装、升级和登录流程增加 `https://ilinkai.weixin.qq.com` 连通性检查，日志直接显示 HTTP、TLS 或 timeout 结果。
+- 兼容没有 `su` / `runuser` 的 OpenWrt 固件，微信安装、升级、登录和下线改用 `start-stop-daemon` 兜底以 `openclaw` 用户执行。
+- 微信安装网络探测优先使用 `curl`，避免低内存/精简 musl 固件上 Node `fetch` 触发 undici Wasm OOM。
+- 微信官方 CLI 安装触发 undici Wasm OOM 时，自动改用 npm 直装到 OpenClaw `npm/projects` 并继续注册插件配置。
 - 微信登录前补充 Node、python3、插件目录、账号状态目录和配置写权限检查，并清理残留登录进程与旧二维码状态。
 - 登录失败时在 LuCI 页面展示真实日志详情，不再只显示“登录失败”。
 - 二维码链接提取更稳，页面明确提示“点击链接后用微信扫码”。
