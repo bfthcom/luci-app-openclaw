@@ -29,6 +29,12 @@
 - 本地版本高于 GitHub latest 时不再误判为可升级。
 - 已实测旧版 `2.0.8` 可通过 LuCI 检测并一键升级到 `2.0.9`，升级日志返回成功且服务保持正常。
 
+### 修复干净安装启动失败
+
+- 修复首次安装后 `doctor --fix` 可能移除 `gateway.auth.token`，导致 Gateway 绑定 LAN 时因缺少认证直接退出，页面显示“启动失败，退出码 78”。
+- `doctor --fix` 执行环境补齐 `NODE_ICU_DATA` 和 Node/OpenClaw PATH，避免部分 musl 固件上配置迁移阶段触发 ICU/Unicode 正则错误。
+- Gateway 启动时增加 `OPENCLAW_GATEWAY_TOKEN` 环境变量兜底，确保 JSON 配置被迁移工具改写后仍能使用 UCI token 启动。
+
 ### 验证
 
 - 通过 shell / Node / Lua 语法检查。
