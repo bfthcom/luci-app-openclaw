@@ -238,7 +238,13 @@ const timer = setTimeout(() => controller.abort(new Error('timeout')), 10000);
 end
 
 local function openclaw_user_runner_cmd()
-	return "_oc_as_openclaw() { " ..
+	return "_oc_raise_openclaw_limits() { " ..
+		"ulimit -v unlimited 2>/dev/null || true; " ..
+		"ulimit -m unlimited 2>/dev/null || true; " ..
+		"ulimit -d unlimited 2>/dev/null || true; " ..
+		"}; " ..
+		"_oc_as_openclaw() { " ..
+		"_oc_raise_openclaw_limits; " ..
 		"if command -v su >/dev/null 2>&1; then su -s /bin/sh openclaw -c \"$1\"; " ..
 		"elif command -v runuser >/dev/null 2>&1; then runuser -u openclaw -- sh -c \"$1\"; " ..
 		"elif command -v start-stop-daemon >/dev/null 2>&1; then _oc_pid=/tmp/openclaw-user-$$.pid; _oc_cwd=$(pwd); rm -f \"$_oc_pid\"; start-stop-daemon -S -m -p \"$_oc_pid\" -c openclaw:openclaw -d \"$_oc_cwd\" -x /bin/sh -- -c \"$1\"; _oc_rc=$?; rm -f \"$_oc_pid\"; return $_oc_rc; " ..
@@ -1582,7 +1588,7 @@ function action_wechat_install()
 		"_oc_as_openclaw 'test -w %s/.npm && test -w %s/.tmp && test -w %s/.openclaw' || { echo '❌ openclaw 用户无法写入 npm cache/tmp/data 目录' >> /tmp/openclaw-wechat-install.log; echo 1 > /tmp/openclaw-wechat-install.exit; exit 0; }; " ..
 		"cd %s && " ..
 		"_oc_as_openclaw 'HOME=%s OPENCLAW_HOME=%s OPENCLAW_STATE_DIR=%s/.openclaw " ..
-		"OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json NPM_CONFIG_CACHE=%s/.npm npm_config_cache=%s/.npm TMPDIR=%s/.tmp " ..
+		"OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json NODE_ICU_DATA=%s/node/share/icu NPM_CONFIG_CACHE=%s/.npm npm_config_cache=%s/.npm TMPDIR=%s/.tmp " ..
 		"PATH=%s/node/bin:%s/global/bin:$PATH " ..
 		"%s -y @tencent-weixin/openclaw-weixin-cli install' >> /tmp/openclaw-wechat-install.log 2>&1; " ..
 		"RC=$?; echo $RC > /tmp/openclaw-wechat-install.exit; " ..
@@ -1600,7 +1606,7 @@ function action_wechat_install()
 		oc_data, oc_data,
 		oc_data, oc_data, oc_data,
 		install_path, oc_data, oc_data, oc_data,
-		oc_data, oc_data, oc_data, oc_data,
+		oc_data, install_path, oc_data, oc_data, oc_data,
 		install_path, install_path, npx_bin,
 		oc_data
 	)
@@ -1742,15 +1748,23 @@ function action_wechat_login()
                 "if [ $RC -ne 0 ]; then echo '❌ 微信插件注册失败，无法登录' >> /tmp/openclaw-wechat-qrcode.txt; exit 0; fi; " ..
                 "cd %s && " ..
                 "_oc_as_openclaw 'HOME=%s OPENCLAW_HOME=%s OPENCLAW_STATE_DIR=%s/.openclaw OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json " ..
+                "NODE_ICU_DATA=%s/node/share/icu " ..
                 "NPM_CONFIG_CACHE=%s/.npm npm_config_cache=%s/.npm TMPDIR=%s/.tmp PATH=%s/node/bin:%s/global/bin:$PATH " ..
                 "%s %s channels login --channel openclaw-weixin' >> /tmp/openclaw-wechat-qrcode.txt 2>&1; " ..
                 "echo $? > /tmp/openclaw-wechat-login.exit; " ..
                 ") >/dev/null 2>&1 & echo $! > /tmp/openclaw-wechat-login.pid",
                 install_path, oc_entry, wechat_plugin_dir, node_bin,
-                oc_data, oc_data, oc_data, oc_data, oc_data, oc_data, oc_data,
-                oc_data, oc_data, oc_data, oc_data, oc_data, oc_data, oc_data,
-                oc_data, oc_data, oc_data, oc_data, oc_data, oc_data, oc_data, oc_data,
-                install_path, install_path, node_bin, oc_entry
+                oc_data, oc_data, oc_data,
+                oc_data,
+                oc_data, oc_data, oc_data,
+                oc_data, oc_data,
+                oc_data, oc_data, oc_data, oc_data, oc_data,
+                install_path,
+                oc_data, oc_data, oc_data, oc_data,
+                install_path,
+                oc_data, oc_data, oc_data,
+                install_path, install_path,
+                node_bin, oc_entry
         )
         sys.exec(login_cmd)
 
@@ -2043,7 +2057,7 @@ function action_wechat_upgrade_plugin()
 		"_oc_as_openclaw 'test -w %s/.npm && test -w %s/.tmp && test -w %s/.openclaw' || { echo '❌ openclaw 用户无法写入 npm cache/tmp/data 目录' >> /tmp/openclaw-wechat-install.log; echo 1 > /tmp/openclaw-wechat-install.exit; exit 0; }; " ..
 		"cd %s && " ..
 		"_oc_as_openclaw 'HOME=%s OPENCLAW_HOME=%s OPENCLAW_STATE_DIR=%s/.openclaw " ..
-		"OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json NPM_CONFIG_CACHE=%s/.npm npm_config_cache=%s/.npm TMPDIR=%s/.tmp " ..
+		"OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json NODE_ICU_DATA=%s/node/share/icu NPM_CONFIG_CACHE=%s/.npm npm_config_cache=%s/.npm TMPDIR=%s/.tmp " ..
 		"PATH=%s/node/bin:%s/global/bin:$PATH " ..
 		"%s -y @tencent-weixin/openclaw-weixin-cli install' >> /tmp/openclaw-wechat-install.log 2>&1; " ..
 		"RC=$?; echo $RC > /tmp/openclaw-wechat-install.exit; " ..
@@ -2060,7 +2074,7 @@ function action_wechat_upgrade_plugin()
 		oc_data, oc_data,
 		oc_data, oc_data, oc_data,
 		install_path, oc_data, oc_data, oc_data,
-		oc_data, oc_data, oc_data, oc_data,
+		oc_data, install_path, oc_data, oc_data, oc_data,
 		install_path, install_path, npx_bin,
 		oc_data
 	)
@@ -2122,10 +2136,10 @@ function action_wechat_logout()
 
 	        -- 在后台执行 logout
         local logout_cmd = string.format(
-                openclaw_user_runner_cmd() .. "cd %s && _oc_as_openclaw 'HOME=%s OPENCLAW_HOME=%s OPENCLAW_STATE_DIR=%s/.openclaw OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json " ..
+                openclaw_user_runner_cmd() .. "cd %s && _oc_as_openclaw 'HOME=%s OPENCLAW_HOME=%s OPENCLAW_STATE_DIR=%s/.openclaw OPENCLAW_CONFIG_PATH=%s/.openclaw/openclaw.json NODE_ICU_DATA=%s/node/share/icu " ..
                 "PATH=%s/node/bin:%s/global/bin:$PATH " ..
                 "%s %s channels logout --channel openclaw-weixin --account \"%s\"'",
-                oc_data, oc_data, oc_data, oc_data, oc_data, install_path, install_path, node_bin, oc_entry, account_id
+                oc_data, oc_data, oc_data, oc_data, oc_data, install_path, install_path, install_path, node_bin, oc_entry, account_id
         )
 
         sys.exec(logout_cmd .. " >/dev/null 2>&1")
