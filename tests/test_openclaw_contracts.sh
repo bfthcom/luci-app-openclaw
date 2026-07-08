@@ -26,6 +26,8 @@ grep -q "luci-app-openclaw.json" Makefile || fail "Makefile must install rpcd AC
 grep -q "openclaw-permissions.sh" Makefile || fail "Makefile must install permission helper"
 grep -q 'openclaw-permissions.sh fix-state "$${OC_DATA}/.openclaw"' Makefile || fail "postinst must repair existing OpenClaw state permissions after reinstall"
 grep -q '/etc/init.d/openclaw start >/dev/null 2>&1' Makefile || fail "postinst must restart enabled OpenClaw service after reinstall"
+grep -q 'openclaw-permissions.sh fix-state "${OC_DATA}/.openclaw"' scripts/build_ipk.sh || fail "release ipk postinst must repair existing OpenClaw state permissions after reinstall"
+grep -q '/etc/init.d/openclaw start >/dev/null 2>&1' scripts/build_ipk.sh || fail "release ipk postinst must restart enabled OpenClaw service after reinstall"
 if grep -q "openclaw.zh-cn.lmo" Makefile; then
 	fail "main package must not install openclaw.zh-cn.lmo"
 fi
